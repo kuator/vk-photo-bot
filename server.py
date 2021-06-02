@@ -3,7 +3,6 @@
 from flask import Flask
 from flask import request
 import json
-import vk
 import random
 import requests
 import os
