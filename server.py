@@ -98,7 +98,7 @@ def processing():
             ('user_id', user_id),
             ('attachment', photo_full_id),
             ('random_id', random.getrandbits(64)),
-            ('message', 'sent'),
+            ('message', 'привет, привет'),
             ('access_token', community_token),
             ('v', 5.103),
             )
