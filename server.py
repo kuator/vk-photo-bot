@@ -40,8 +40,7 @@ def processing():
             ('peer_id', user_id),
             ('access_token', community_token),
             ('media_type', 'photo'),
-            ('count', 2),
-            ('preserve_order', 1),
+            ('count', 20),
             ('v', 5.131),
             )
         response = requests.get('https://api.vk.com/method/messages.getHistoryAttachments', params=params)
