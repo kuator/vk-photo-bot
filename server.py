@@ -7,13 +7,12 @@ import vk
 import random
 import requests
 import os
+from config import confirmation_token, community_token, user_token
 
 app = Flask(__name__)
 
-confirmation_token='c215ebfc'
-access_token='92be9d44a157e45763b9e91ef024343680924dbe669fe6a2bc8cce0b9a877c97e05f7edce74d846d9fcc2'
-user_token='0197551beaf8129ffda3a5ea8e2a4fca268fd70e0b7f249ec2a2799a8b1e66cdc3349a8f286ec489dba18'
-user_id=343976380
+group_id='175402552'
+album_id='258897132'
 
 @app.route('/', methods=['POST'])
 def processing():
@@ -24,30 +23,42 @@ def processing():
         return confirmation_token
     elif data['type'] == 'message_new':
         params = (
-            ('group_id', '175402552'),
-            ('album_id', '258897132'),
+            ('group_id', group_id),
+            ('album_id', album_id),
             ('access_token', user_token),
             ('v', 5.103),
             )
-        # photo_id='457240575'
-        # owner_id='-175402552'
-        # photo_full_id = f'photo{owner_id}_{photo_id}'
+        if 'attachments' not in data['object']:
+            return 'ok'
+        if len(data['object']['attachments'])==0:
+            return 'ok'
+        if data['object']['attachments'][0]['type'] != 'photo':
+            return 'ok'
+        owner_id = data['object']['attachments'][0]['photo']['owner_id']
+        photo_id = data['object']['attachments'][0]['photo']['id']
+        photo_full_id = f'{owner_id}_{photo_id}'
+        if 'access_key' in data['object']['attachments'][0]['photo']:
+            if len(data['object']['attachments'][0]['photo']['access_key'])>0:
+                access_key = data['object']['attachments'][0]['photo']['access_key']
+                photo_full_id = f'{photo_full_id}_{access_key}'
 
-        # print(photos_list)
-        # params = (
-        #     ('user_id', '175402552'),
-        #     ('album_id', '258897132'),
-        #     ('attachments', photo_full_id),
-        #     ('random_id', random.getrandbits(64)),
-        #     ('message', 'sent'),
-        #     ('access_token', access_token),
-        #     ('reply_to', int(id)),
-        #     ('v', 5.103),
-        #     )
-        # response = requests.get('https://api.vk.com/method/messages.send', params=params)
+        params = (
+            ('access_token', user_token),
+            ('photos', photo_full_id),
+            ('v', 5.103),
+            )
+        response = requests.get('https://api.vk.com/method/photos.getById', params=params)
+        text = json.loads(response.text)
+        image_url = text['response'][0]['sizes'][-1]['url']
+        params = (
+            ('group_id', group_id),
+            ('album_id', album_id),
+            ('access_token', user_token),
+            ('v', 5.103),
+            )
         response = requests.get('https://api.vk.com/method/photos.getUploadServer', params=params)
+        text = json.loads(response.text)
         upload_server = json.loads(response.text)['response']['upload_url']
-        image_url = "https://sun9-40.userapi.com/impg/c855532/v855532066/2514a2/lL9OCsanJv0.jpg?size=1366x768&quality=96&sign=ef82a20c947a8dced9d351428d63f565&type=album"
         file_path = os.path.basename(image_url)
         response = requests.get(image_url)
         if response.status_code == 200:
@@ -66,8 +77,8 @@ def processing():
         server = json.loads(response.text)['server']
         try:
             params = (
-                ('group_id', '175402552'),
-                ('album_id', '258897132'),
+                ('group_id', group_id),
+                ('album_id', album_id),
                 ('hash', img_hash),
                 ('photos_list', photos_list),
                 ('server', server),
@@ -78,20 +89,20 @@ def processing():
         except Exception as e:
             print(e.message)
             raise e
-        # print(type(json.loads(response.text)))
         image_data = json.loads(response.text)
-        # print(data['response'][0]['owner_id'])
         photo_id=image_data['response'][0]['id']
         owner_id=image_data['response'][0]['owner_id']
         photo_full_id = f'photo{owner_id}_{photo_id}'
-        print(photo_full_id)
-        # print(photos_list)
-        session = vk.Session()
-        api = vk.API(session, v='5.110')
-        # print(data)
         user_id = data['object']['user_id']
-        api.messages.send(access_token=access_token, user_id=str(user_id), message='Привет!', attachment=photo_full_id, random_id=random.getrandbits(64))
-        return 'ok'
+        params = (
+            ('user_id', user_id),
+            ('attachment', photo_full_id),
+            ('random_id', random.getrandbits(64)),
+            ('message', 'sent'),
+            ('access_token', community_token),
+            ('v', 5.103),
+            )
+        response = requests.get('https://api.vk.com/method/messages.send', params=params)
     return 'ok'
 
 
