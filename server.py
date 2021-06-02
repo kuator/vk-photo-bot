@@ -47,6 +47,7 @@ def processing():
         response = requests.get('https://api.vk.com/method/messages.getHistoryAttachments', params=params)
         text = json.loads(response.text)
         image_url = text['response']['items'][0]['attachment']['photo']['sizes'][-1]['url']
+        print(text['response']['items'])
         
         params = (
             ('group_id', group_id),
