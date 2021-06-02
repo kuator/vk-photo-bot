@@ -21,12 +21,6 @@ def processing():
     if data['type'] == 'confirmation':
         return confirmation_token
     elif data['type'] == 'message_new':
-        params = (
-            ('group_id', group_id),
-            ('album_id', album_id),
-            ('access_token', user_token),
-            ('v', 5.103),
-            )
         if 'attachments' not in data['object']:
             return 'ok'
         if len(data['object']['attachments'])==0:
@@ -41,14 +35,18 @@ def processing():
                 access_key = data['object']['attachments'][0]['photo']['access_key']
                 photo_full_id = f'{photo_full_id}_{access_key}'
 
+        user_id = data['object']['user_id']
         params = (
-            ('access_token', user_token),
-            ('photos', photo_full_id),
-            ('v', 5.103),
+            ('peer_id', user_id),
+            ('access_token', community_token),
+            ('media_type', 'photo'),
+            ('count', 1),
+            ('v', 5.131),
             )
-        response = requests.get('https://api.vk.com/method/photos.getById', params=params)
+        response = requests.get('https://api.vk.com/method/messages.getHistoryAttachments', params=params)
         text = json.loads(response.text)
-        image_url = text['response'][0]['sizes'][-1]['url']
+        image_url = text['response']['items'][0]['attachment']['photo']['sizes'][-1]['url']
+        
         params = (
             ('group_id', group_id),
             ('album_id', album_id),
@@ -82,7 +80,7 @@ def processing():
                 ('photos_list', photos_list),
                 ('server', server),
                 ('access_token', user_token),
-                ('v', 5.103),
+                ('v', 5.131),
                 )
             response = requests.get('https://api.vk.com/method/photos.save', params=params)
         except Exception as e:
@@ -99,7 +97,7 @@ def processing():
             ('random_id', random.getrandbits(64)),
             ('message', 'привет, привет'),
             ('access_token', community_token),
-            ('v', 5.103),
+            ('v', 5.131),
             )
         response = requests.get('https://api.vk.com/method/messages.send', params=params)
     return 'ok'

@@ -2,3 +2,5 @@ venv/
 env/
 another.py
 __pycache__
+ngrok
+ngrok-stable-linux-amd64.zip
