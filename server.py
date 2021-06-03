@@ -7,11 +7,25 @@ import random
 import requests
 import os
 from config import confirmation_token, community_token, user_token
+import re
 
 app = Flask(__name__)
 
 group_id='175402552'
 album_id='258897132'
+
+
+def atoi(text):
+    return int(text) if text.isdigit() else text
+
+def natural_keys(text):
+    '''
+    alist.sort(key=natural_keys) sorts in human order
+    http://nedbatchelder.com/blog/200712/human_sorting.html
+    (See Toothy's implementation in the comments)
+    '''
+    return [ atoi(c) for c in re.split(r'(\d+)', text) ]
+
 
 @app.route('/', methods=['POST'])
 def processing():
@@ -36,17 +50,29 @@ def processing():
                 photo_full_id = f'{photo_full_id}_{access_key}'
         print(data)
 
-        user_id = data['object']['user_id']
-        params = (
-            ('peer_id', user_id),
-            ('access_token', community_token),
-            ('media_type', 'photo'),
-            ('count', 20),
-            ('v', 5.131),
-            )
-        response = requests.get('https://api.vk.com/method/messages.getHistoryAttachments', params=params)
-        text = json.loads(response.text)
-        image_url = text['response']['items'][0]['attachment']['photo']['sizes'][-1]['url']
+        photo = data['object']['attachments'][0]['photo']
+        keys = photo.keys()
+        photos = list(filter(lambda x: re.search("^photo_.*$", x), keys))
+        print(photos)
+        photos.sort(key=natural_keys)
+        print(photos[-1])
+        image_url = photo[photos[-1]]
+
+
+        #--------------------------
+        # user_id = data['object']['user_id']
+        # params = (
+        #     ('peer_id', user_id),
+        #     ('access_token', community_token),
+        #     ('media_type', 'photo'),
+        #     ('count', 20),
+        #     ('v', 5.131),
+        #     )
+        # response = requests.get('https://api.vk.com/method/messages.getHistoryAttachments', params=params)
+        # text = json.loads(response.text)
+        # image_url = text['response']['items'][0]['attachment']['photo']['sizes'][-1]['url']
+
+        #----------------------
         # print(text['response'])
         
         params = (
@@ -57,7 +83,7 @@ def processing():
             )
         response = requests.get('https://api.vk.com/method/photos.getUploadServer', params=params)
         text = json.loads(response.text)
-        upload_server = json.loads(response.text)['response']['upload_url']
+        upload_server = text['response']['upload_url']
         file_path = os.path.basename(image_url)
         response = requests.get(image_url)
         if response.status_code == 200:
