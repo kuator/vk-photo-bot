@@ -34,6 +34,7 @@ def processing():
             if len(data['object']['attachments'][0]['photo']['access_key'])>0:
                 access_key = data['object']['attachments'][0]['photo']['access_key']
                 photo_full_id = f'{photo_full_id}_{access_key}'
+        print(data)
 
         user_id = data['object']['user_id']
         params = (
@@ -46,7 +47,7 @@ def processing():
         response = requests.get('https://api.vk.com/method/messages.getHistoryAttachments', params=params)
         text = json.loads(response.text)
         image_url = text['response']['items'][0]['attachment']['photo']['sizes'][-1]['url']
-        print(text['response'])
+        # print(text['response'])
         
         params = (
             ('group_id', group_id),
